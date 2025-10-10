@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Power BI Dashboard Rotation</title>
+  <title>Power BI Dashboard Rotation (Auto Refresh)</title>
   <style>
     html, body {
       margin: 0;
@@ -24,26 +24,48 @@
   <iframe id="dashboardFrame" src="" allowfullscreen></iframe>
 
   <script>
+    // List of Power BI dashboards
     const dashboards = [
-      "https://app.powerbi.com/view?r=eyJrIjoiNmZjMmI1NmUtMzYwYS00ODMwLTk3NTAtODM4MWI1ZmU5MGUzIiwidCI6ImJkMDNhNzM1LTJhYTMtNGNjYS05NzIyLTJhZTQ5MjlhYjNlYyIsImMiOjEwfQ%3D%3D",
-      "https://app.powerbi.com/view?r=eyJrIjoiZTVhOGNlNWItM2Q5ZC00OTljLWFmMmEtZWE1YzkzN2Y5YzllIiwidCI6ImJkMDNhNzM1LTJhYTMtNGNjYS05NzIyLTJhZTQ5MjlhYjNlYyIsImMiOjEwfQ%3D%3D"
+      "https://app.powerbi.com/view?r=eyJrIjoiZjkyNTEzMmUtY2ZhOS00OTAwLWE4MTAtNTZkZjdiYTJlOTRiIiwidCI6ImJkMDNhNzM1LTJhYTMtNGNjYS05NzIyLTJhZTQ5MjlhYjNlYyIsImMiOjEwfQ%3D%3D",
+      "https://app.powerbi.com/view?r=eyJrIjoiMzFlMTQwMTgtMjJiYS00NzJiLWI4NDctNDZiZWNiM2YyMmIzIiwidCI6ImJkMDNhNzM1LTJhYTMtNGNjYS05NzIyLTJhZTQ5MjlhYjNlYyIsImMiOjEwfQ%3D%3D"
     ];
 
-    // Set how long each tab shows (in milliseconds)
-    const interval = 30000; 
+    // --- Configuration ---
+    const displayInterval = 10000; // time each dashboard stays visible (10 seconds)
+    const reloadInterval = 30000;  // refresh iframe every 30 seconds for near real-time (set higher if needed)
+    const hardRefreshInterval = 30 * 60 * 1000; // force full reload every 30 mins
 
     let current = 0;
     const frame = document.getElementById("dashboardFrame");
 
+    // Load dashboard with cache-busting timestamp
+    function loadDashboard(index) {
+      const timestamp = new Date().getTime();
+      frame.src = `${dashboards[index]}&_ts=${timestamp}`; // prevent browser cache
+    }
+
+    // Switch between dashboards
     function switchDashboard() {
-      frame.src = dashboards[current];
+      loadDashboard(current);
       current = (current + 1) % dashboards.length;
     }
 
-    // Start rotation
+    // Auto-refresh current dashboard (for near real-time visuals)
+    function softReload() {
+      const currentUrl = frame.src.split('&_ts=')[0];
+      const timestamp = new Date().getTime();
+      frame.src = `${currentUrl}&_ts=${timestamp}`;
+    }
+
+    // --- Start Rotation ---
     switchDashboard();
-    setInterval(switchDashboard, interval);
+    setInterval(switchDashboard, displayInterval);
+    setInterval(softReload, reloadInterval);
+
+    // Hard reload the whole page every 30 mins (ensures memory cleanup + full update)
+    setInterval(() => location.reload(true), hardRefreshInterval);
   </script>
 
 </body>
 </html>
+
